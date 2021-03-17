@@ -486,6 +486,29 @@ inline ALARM_ENTRY* health_create_alarm_entry(
     ae->old_value_string = strdupz(format_value_and_unit(value_string, 100, ae->old_value, ae->units, -1));
     ae->new_value_string = strdupz(format_value_and_unit(value_string, 100, ae->new_value, ae->units, -1));
 
+    if (info && strstr (info, "$this")) {
+        char *buf=NULL;
+        buf = find_and_replace(ae->info, "$this", ae->new_value_string);
+        ae->info = strdupz(buf);
+        free(buf);
+    }
+
+    if (info && family && strstr (info, "$family")) {
+        char *buf=NULL;
+        buf = find_and_replace(ae->info, "$family", ae->family);
+        ae->info = strdupz(buf);
+        free(buf);
+    }
+
+    if (info && units && strstr (info, "$units")) {
+        char *buf=NULL;
+        buf = find_and_replace(ae->info, "$units", ae->units);
+        ae->info = strdupz(buf);
+        free(buf);
+    }
+
+    debug(D_HEALTH, "GREPME [%s]", ae->info);
+
     ae->old_status = old_status;
     ae->new_status = new_status;
     ae->duration = duration;
