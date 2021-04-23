@@ -707,27 +707,26 @@ static void get_system_timezone(void) {
         tmp = localtime_r(&t, &tmbuf);
 
         if (tmp != NULL) {
-            if(strftime(zone, FILENAME_MAX, "%Z", tmp) == 0) {
+            if (strftime(zone, FILENAME_MAX, "%Z", tmp) == 0) {
                 netdata_configured_abbrev_timezone = strdupz("UTC");
-            }
-            else
+            } else
                 netdata_configured_abbrev_timezone = strdupz(zone);
 
-            if(strftime(zone, FILENAME_MAX, "%z", tmp) == 0) {
+            if (strftime(zone, FILENAME_MAX, "%z", tmp) == 0) {
                 netdata_configured_utc_offset = 0;
-            }
-            else {
-                sign[0] = zone[0]=='-' || zone[0]=='+'?zone[0]:'0';
+            } else {
+                sign[0] = zone[0] == '-' || zone[0] == '+' ? zone[0] : '0';
                 sign[1] = '\0';
-                hh[0] = isdigit(zone[1])?zone[1]:'0';
-                hh[1] = isdigit(zone[2])?zone[2]:'0';
+                hh[0] = isdigit(zone[1]) ? zone[1] : '0';
+                hh[1] = isdigit(zone[2]) ? zone[2] : '0';
                 hh[2] = '\0';
-                mm[0] = isdigit(zone[3])?zone[3]:'0';
-                mm[1] = isdigit(zone[4])?zone[4]:'0';
+                mm[0] = isdigit(zone[3]) ? zone[3] : '0';
+                mm[1] = isdigit(zone[4]) ? zone[4] : '0';
                 mm[2] = '\0';
 
                 netdata_configured_utc_offset = (atoi(hh) * 60 * 60) + (atoi(mm) * 60);
-                netdata_configured_utc_offset = sign[0]=='-'?-netdata_configured_utc_offset:netdata_configured_utc_offset;
+                netdata_configured_utc_offset =
+                    sign[0] == '-' ? -netdata_configured_utc_offset : netdata_configured_utc_offset;
             }
         } else {
             netdata_configured_abbrev_timezone = strdupz("UTC");
