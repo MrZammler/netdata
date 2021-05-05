@@ -366,6 +366,7 @@ static inline void health_alarm_execute(RRDHOST *host, ALARM_ENTRY *ae) {
     return; //health_alarm_wait_for_execution
 done:
     health_alarm_log_save(host, ae);
+    health_alarm_log_save_sqlite(host, ae);
 }
 
 static inline void health_alarm_wait_for_execution(ALARM_ENTRY *ae) {

@@ -580,6 +580,7 @@ inline void health_alarm_log(
                     ae->non_clear_duration += t->non_clear_duration;
 
                 health_alarm_log_save(host, t);
+                health_alarm_log_save_sqlite(host, t);
             }
 
             // no need to continue
@@ -589,6 +590,7 @@ inline void health_alarm_log(
     netdata_rwlock_unlock(&host->health_log.alarm_log_rwlock);
 
     health_alarm_log_save(host, ae);
+    health_alarm_log_save_sqlite(host, ae);
 }
 
 inline void health_alarm_log_free_one_nochecks_nounlink(ALARM_ENTRY *ae) {
