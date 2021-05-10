@@ -62,4 +62,5 @@ extern void sql_store_chart_label(uuid_t *chart_uuid, int source_type, char *lab
 extern void sql_build_context_param_list(struct context_param **param_list, RRDHOST *host, char *context, char *chart);
 extern void store_claim_id(uuid_t *host_id, uuid_t *claim_id);
 extern void health_alarm_log_save_sqlite(RRDHOST *host, ALARM_ENTRY *ae);
+extern void health_alarm_entry_sql2json(BUFFER *wb, uint32_t unique_id, uint32_t alarm_id, RRDHOST *host);
 #endif //NETDATA_SQLITE_FUNCTIONS_H

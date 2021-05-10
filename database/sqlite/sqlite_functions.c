@@ -1386,7 +1386,7 @@ failed:
     return;
 }
 
-#define SQL_CREATE_HEALTH_LOG(guid) "CREATE TABLE IF NOT EXISTS health_log_%s(hostname text, unique_id int, alarm_id int, alarm_event_id int, updated_by_id int, updates_id int, when_key int, duration int, non_clear_duration int, flags int, exec_run_timestamp int, delay_up_to_timestamp int, name text, chart text, family text, exec text, recipient text, source text, units text, info text, exec_code int, new_status int, old_status int, delay int, new_value int, old_value int, last_repeat int, classification text, component text, type text);", guid
+#define SQL_CREATE_HEALTH_LOG(guid) "CREATE TABLE IF NOT EXISTS health_log_%s(hostname text, unique_id int, alarm_id int, alarm_event_id int, updated_by_id int, updates_id int, when_key int, duration int, non_clear_duration int, flags int, exec_run_timestamp int, delay_up_to_timestamp int, name text, chart text, family text, exec text, recipient text, source text, units text, info text, exec_code int, new_status real, old_status real, delay int, new_value int, old_value int, last_repeat int, classification text, component text, type text);", guid
 void sql_create_health_log(RRDHOST *host) {
     static int exists; //needs to be per host
     int rc;
@@ -1669,7 +1669,7 @@ void health_alarm_log_save_sqlite(RRDHOST *host, ALARM_ENTRY *ae) {
         debug(D_HEALTH, "GREPME: Failed to bind host");
         return;
     }
-
+    
     rc = sqlite3_bind_int(res, 23, ae->old_status);
     if (unlikely(rc != SQLITE_OK)) {
         error_report("Failed to bind host_id parameter to store node instance information");
@@ -1684,14 +1684,16 @@ void health_alarm_log_save_sqlite(RRDHOST *host, ALARM_ENTRY *ae) {
         return;
     }
 
-    rc = sqlite3_bind_int(res, 25, ae->new_value);
+    //is double ok?
+    rc = sqlite3_bind_double(res, 25, ae->new_value);
     if (unlikely(rc != SQLITE_OK)) {
         error_report("Failed to bind host_id parameter to store node instance information");
         debug(D_HEALTH, "GREPME: Failed to bind host");
         return;
     }
 
-    rc = sqlite3_bind_int(res, 26, ae->old_value);
+    //is double ok?
+    rc = sqlite3_bind_double(res, 26, ae->old_value);
     if (unlikely(rc != SQLITE_OK)) {
         error_report("Failed to bind host_id parameter to store node instance information");
         debug(D_HEALTH, "GREPME: Failed to bind host");
@@ -1734,69 +1736,39 @@ void health_alarm_log_save_sqlite(RRDHOST *host, ALARM_ENTRY *ae) {
     
 
     return;
+}
+
+#define SQL_SELECT_HEALTH_LOG(guid) "SELECT hostname, unique_id, alarm_id, alarm_event_id, updated_by_id, updates_id, when_key, duration, non_clear_duration, flags, exec_run_timestamp, delay_up_to_timestamp, name, chart, family, exec, recipient, source, units, info, exec_code, new_status, old_status, delay, new_value, old_value, last_repeat, classification, component, type FROM health_log_%s();", guid
+void health_alarm_entry_sql2json(BUFFER *wb, uint32_t unique_id, uint32_t alarm_id, RRDHOST *host) {
+    sqlite3_stmt *res = NULL;
+    int rc;
+    char *guid = NULL, command[1000];
+
+    if (unlikely(!db_meta)) {
+        if (default_rrd_memory_mode == RRD_MEMORY_MODE_DBENGINE)
+            error_report("Database has not been initialized");
+        return;
+    }
+
+    guid = strdupz(host->machine_guid);
+
+    guid[8]='_';
+    guid[13]='_';
+    guid[18]='_';
+    guid[23]='_';
+
+    sprintf(command, SQL_SELECT_HEALTH_LOG(guid));
+
+    rc = sqlite3_prepare_v2(db_meta, command, -1, &res, 0);
+    if (unlikely(rc != SQLITE_OK)) {
+        error_report("Failed to prepare statement select alarm entry");
+        debug(D_HEALTH, "GREPME: Failed to prepare statement");
+        return;
+    }
+
     
-    /* health_log_rotate(host); */
-    /* if(likely(host->health_log_fp)) { */
-    /*     if(unlikely(fprintf(host->health_log_fp */
-    /*                         , "%c\t%s" */
-    /*                     "\t%08x\t%08x\t%08x\t%08x\t%08x" */
-    /*                     "\t%08x\t%08x\t%08x" */
-    /*                     "\t%08x\t%08x\t%08x" */
-    /*                     "\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" */
-    /*                     "\t%d\t%d\t%d\t%d" */
-    /*                     "\t" CALCULATED_NUMBER_FORMAT_AUTO "\t" CALCULATED_NUMBER_FORMAT_AUTO */
-    /*                     "\t%016lx" */
-    /*                     "\t%s\t%s\t%s" */
-    /*                     "\n" */
-    /*                         , (ae->flags & HEALTH_ENTRY_FLAG_SAVED)?'U':'A' */
-    /*                         , host->hostname */
+    
+    
+    debug(D_HEALTH, "GREPME Hello");
 
-    /*                         , ae->unique_id */
-    /*                         , ae->alarm_id */
-    /*                         , ae->alarm_event_id */
-    /*                         , ae->updated_by_id */
-    /*                         , ae->updates_id */
-
-    /*                         , (uint32_t)ae->when */
-    /*                         , (uint32_t)ae->duration */
-    /*                         , (uint32_t)ae->non_clear_duration */
-    /*                         , (uint32_t)ae->flags */
-    /*                         , (uint32_t)ae->exec_run_timestamp */
-    /*                         , (uint32_t)ae->delay_up_to_timestamp */
-
-    /*                         , (ae->name)?ae->name:"" */
-    /*                         , (ae->chart)?ae->chart:"" */
-    /*                         , (ae->family)?ae->family:"" */
-    /*                         , (ae->exec)?ae->exec:"" */
-    /*                         , (ae->recipient)?ae->recipient:"" */
-    /*                         , (ae->source)?ae->source:"" */
-    /*                         , (ae->units)?ae->units:"" */
-    /*                         , (ae->info)?ae->info:"" */
-
-    /*                         , ae->exec_code */
-    /*                         , ae->new_status */
-    /*                         , ae->old_status */
-    /*                         , ae->delay */
-
-    /*                         , ae->new_value */
-    /*                         , ae->old_value */
-    /*                         , (uint64_t)ae->last_repeat */
-    /*                         , (ae->classification)?ae->classification:"Unknown" */
-    /*                         , (ae->component)?ae->component:"Unknown" */
-    /*                         , (ae->type)?ae->type:"Unknown" */
-    /*     ) < 0)) */
-    /*         error("HEALTH [%s]: failed to save alarm log entry to '%s'. Health data may be lost in case of abnormal restart.", host->hostname, host->health_log_filename); */
-    /*     else { */
-    /*         ae->flags |= HEALTH_ENTRY_FLAG_SAVED; */
-    /*         host->health_log_entries_written++; */
-    /*     } */
-    /* } */
-/* #ifdef ENABLE_ACLK */
-/*     if (netdata_cloud_setting) { */
-/*         if ((ae->new_status == RRDCALC_STATUS_WARNING || ae->new_status == RRDCALC_STATUS_CRITICAL) || */
-/*             ((ae->old_status == RRDCALC_STATUS_WARNING || ae->old_status == RRDCALC_STATUS_CRITICAL))) { */
-/*             aclk_update_alarm(host, ae); */
-/*         } */
-/*     } */
-/* #endif */
 }
