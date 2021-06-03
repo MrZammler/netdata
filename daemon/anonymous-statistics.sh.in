@@ -22,9 +22,6 @@ if [ -f "@configdir_POST@/.opt-out-from-anonymous-statistics" ] || [ ! "${DO_NOT
   exit 0
 fi
 
-# Shorten version for easier reporting
-NETDATA_VERSION=$(echo "${NETDATA_VERSION}" | sed 's/-.*//g' | tr -d 'v')
-
 # -------------------------------------------------------------------------------------------------
 # Get the extra variables
 
