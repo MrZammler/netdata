@@ -1257,6 +1257,9 @@ int main(int argc, char **argv) {
     // Load host labels
     reload_host_labels();
 
+    //get some global attributes for analytics
+    set_late_global_environment();
+
     // ------------------------------------------------------------------------
     // spawn the threads
 
@@ -1282,8 +1285,6 @@ int main(int argc, char **argv) {
 
     info("netdata initialization completed. Enjoy real-time performance monitoring!");
     netdata_ready = 1;
-
-    set_late_global_environment();
 
     send_statistics("START", "-",  "-");
     if (crash_detected)
