@@ -6,7 +6,7 @@
 #include "daemon/common.h"
 
 /* Max number of seconds before the first META analytics is sent */
-#define ANALYTICS_INIT_SLEEP_SEC 120
+#define ANALYTICS_INIT_SLEEP_SEC 20
 
 /* Send a META event every X seconds */
 #define ANALYTICS_HEARTBEAT 7200
@@ -29,7 +29,7 @@
     },
 
 /* Needed to calculate the space needed for parameters */
-#define ANALYTICS_NO_OF_ITEMS 32
+#define ANALYTICS_NO_OF_ITEMS 33
 
 struct analytics_data {
     char *netdata_config_stream_enabled;
@@ -64,6 +64,7 @@ struct analytics_data {
     char *netdata_host_aclk_implementation;
     char *netdata_host_agent_claimed;
     char *netdata_host_cloud_enabled;
+    char *netdata_config_https_available;
 
     size_t data_length;
 

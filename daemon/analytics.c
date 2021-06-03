@@ -4,6 +4,7 @@
 
 struct analytics_data analytics_data;
 extern void analytics_exporting_connectors (BUFFER *b);
+extern void analytics_exporting_connectors_ssl (BUFFER *b);
 extern void analytics_build_info (BUFFER *b);
 extern int aclk_connected;
 
@@ -54,6 +55,7 @@ void analytics_log_data(void)
     debug(D_ANALYTICS, "NETDATA_HOST_ACLK_IMPLEMENTATION   : [%s]", analytics_data.netdata_host_aclk_implementation);
     debug(D_ANALYTICS, "NETDATA_HOST_AGENT_CLAIMED         : [%s]", analytics_data.netdata_host_agent_claimed);
     debug(D_ANALYTICS, "NETDATA_HOST_CLOUD_ENABLED         : [%s]", analytics_data.netdata_host_cloud_enabled);
+    debug(D_ANALYTICS, "NETDATA_CONFIG_HTTPS_AVAILABLE     : [%s]", analytics_data.netdata_config_https_available);
 }
 
 /*
@@ -93,6 +95,7 @@ void analytics_free_data(void)
     freez(analytics_data.netdata_host_aclk_implementation);
     freez(analytics_data.netdata_host_agent_claimed);
     freez(analytics_data.netdata_host_cloud_enabled);
+    freez(analytics_data.netdata_config_https_available);
 }
 
 /*
@@ -405,6 +408,26 @@ void analytics_alarms(void)
 }
 
 /*
+ * Pick up if https is actually used
+ */   
+void analytics_https(void)
+{
+    //do clang formatting
+    //check for build ok if enable_https is 0!
+    BUFFER *b = buffer_create(30);
+#ifdef ENABLE_HTTPS
+    analytics_exporting_connectors_ssl(b);
+    buffer_strcat(b, netdata_client_ctx && localhost->ssl.flags == NETDATA_SSL_HANDSHAKE_COMPLETE ? "streaming|" : "|");
+    buffer_strcat(b, netdata_srv_ctx ? "web" : "");
+#else
+    buffer_strcat(b, "||");
+#endif
+
+    analytics_set_data_str(&analytics_data.netdata_config_https_available, (char *)buffer_tostring(b));
+    buffer_free(b);
+}
+
+/*
  * Misc attributes to get (run from meta)
  */
 void analytics_misc(void)
@@ -439,6 +462,7 @@ void analytics_gather_immutable_meta_data(void)
 {
     analytics_misc();
     analytics_exporters();
+    analytics_https();
 }
 
 /*
@@ -794,6 +818,7 @@ void set_global_environment()
     analytics_set_data(&analytics_data.netdata_host_aclk_available, "null");
     analytics_set_data(&analytics_data.netdata_host_agent_claimed, "null");
     analytics_set_data(&analytics_data.netdata_host_cloud_enabled, "null");
+    analytics_set_data(&analytics_data.netdata_config_https_available, "null");
 
     analytics_data.prometheus_hits = 0;
     analytics_data.shell_hits = 0;
@@ -875,7 +900,7 @@ void send_statistics(const char *action, const char *action_result, const char *
 
     sprintf(
         command_to_run,
-        "%s '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' ",
+        "%s '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' ",
         as_script,
         action,
         action_result,
@@ -911,7 +936,8 @@ void send_statistics(const char *action, const char *action_result, const char *
         analytics_data.netdata_host_aclk_available,
         analytics_data.netdata_host_aclk_implementation,
         analytics_data.netdata_host_agent_claimed,
-        analytics_data.netdata_host_cloud_enabled);
+        analytics_data.netdata_host_cloud_enabled,
+        analytics_data.netdata_config_https_available);
 
     info("%s '%s' '%s' '%s'", as_script, action, action_result, action_data);
 
