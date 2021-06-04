@@ -57,6 +57,8 @@ void analytics_log_data(void)
     debug(D_ANALYTICS, "NETDATA_HOST_CLOUD_ENABLED         : [%s]", analytics_data.netdata_host_cloud_enabled);
     debug(D_ANALYTICS, "NETDATA_CONFIG_HTTPS_AVAILABLE     : [%s]", analytics_data.netdata_config_https_available);
     debug(D_ANALYTICS, "NETDATA_INSTALL_TYPE               : [%s]", analytics_data.netdata_install_type);
+    debug(D_ANALYTICS, "NETDATA_CONFIG_IS_PRIVATE_REGISTRY : [%s]", analytics_data.netdata_config_is_private_registry);
+    debug(D_ANALYTICS, "NETDATA_CONFIG_USE_PRIVATE_REGISTRY: [%s]", analytics_data.netdata_config_use_private_registry);
 }
 
 /*
@@ -493,6 +495,9 @@ void analytics_misc(void)
         analytics_set_data(&analytics_data.netdata_host_aclk_available, "false");
 
     analytics_set_data(&analytics_data.netdata_config_exporting_enabled, appconfig_get_boolean(&exporting_config, CONFIG_SECTION_EXPORTING, "enabled", CONFIG_BOOLEAN_NO) ? "true" : "false");
+
+    //if(web_server_mode != WEB_SERVER_MODE_NONE) {
+    debug(D_ANALYTICS, "registry enabled: %d", config_get_boolean(CONFIG_SECTION_REGISTRY, "enabled", 0));
 }
 
 /*
@@ -864,6 +869,8 @@ void set_global_environment()
     analytics_set_data(&analytics_data.netdata_host_cloud_enabled, "null");
     analytics_set_data(&analytics_data.netdata_config_https_available, "null");
     analytics_set_data(&analytics_data.netdata_install_type, "null");
+    analytics_set_data(&analytics_data.netdata_config_is_private_registry, "null");
+    analytics_set_data(&analytics_data.netdata_config_use_private_registry, "null");
 
     analytics_data.prometheus_hits = 0;
     analytics_data.shell_hits = 0;
