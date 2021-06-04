@@ -58,6 +58,7 @@ NETDATA_HOST_ACLK_IMPLEMENTATION="${33}"
 NETDATA_HOST_AGENT_CLAIMED="${34}"
 NETDATA_HOST_CLOUD_ENABLED="${35}"
 NETDATA_CONFIG_HTTPS_AVAILABLE="${36}"
+NETDATA_INSTALL_TYPE="${37}"
 
 # define body of request to be sent
 REQ_BODY="$(cat << EOF
@@ -78,6 +79,7 @@ REQ_BODY="$(cat << EOF
         "netdata_version": "${NETDATA_VERSION}",
         "netdata_buildinfo": ${NETDATA_BUILDINFO},
         "netdata_release_channel": ${NETDATA_CONFIG_RELEASE_CHANNEL},
+        "netdata_install_type": ${NETDATA_INSTALL_TYPE},
         "host_os_name": "${NETDATA_HOST_OS_NAME}",
         "host_os_id": "${NETDATA_HOST_OS_ID}",
         "host_os_id_like": "${NETDATA_HOST_OS_ID_LIKE}",
@@ -147,7 +149,7 @@ EOF
 
 # send the anonymous statistics to the Netdata PostHog
 if [ -n "$(command -v curl 2> /dev/null)" ]; then
-  curl --silent -o /dev/null --write-out '%{http_code}' -X POST --max-time 2 --header "Content-Type: application/json" -d "${REQ_BODY}" https://posthog.netdata.clouds/capture/
+  curl --silent -o /dev/null --write-out '%{http_code}' -X POST --max-time 2 --header "Content-Type: application/json" -d "${REQ_BODY}" https://posthog.netdata.cloud/capture/
 else
   wget -q -O - --no-check-certificate \
   --server-response \

@@ -56,6 +56,7 @@ void analytics_log_data(void)
     debug(D_ANALYTICS, "NETDATA_HOST_AGENT_CLAIMED         : [%s]", analytics_data.netdata_host_agent_claimed);
     debug(D_ANALYTICS, "NETDATA_HOST_CLOUD_ENABLED         : [%s]", analytics_data.netdata_host_cloud_enabled);
     debug(D_ANALYTICS, "NETDATA_CONFIG_HTTPS_AVAILABLE     : [%s]", analytics_data.netdata_config_https_available);
+    debug(D_ANALYTICS, "NETDATA_INSTALL_TYPE               : [%s]", analytics_data.netdata_install_type);
 }
 
 /*
@@ -96,6 +97,7 @@ void analytics_free_data(void)
     freez(analytics_data.netdata_host_agent_claimed);
     freez(analytics_data.netdata_host_cloud_enabled);
     freez(analytics_data.netdata_config_https_available);
+    freez(analytics_data.netdata_install_type);
 }
 
 /*
@@ -336,6 +338,46 @@ void analytics_alarms_notifications(void)
     analytics_set_data_str(&analytics_data.netdata_notification_methods, (char *)buffer_tostring(b));
 
     buffer_free(b);
+}
+
+/*
+ * Checks for the existance of .install_type file and reads it
+ */
+void analytics_get_install_type(void)
+{
+    char *install_type_filename;
+    analytics_set_data_str(&analytics_data.netdata_install_type, "not-available");
+
+    install_type_filename = mallocz(
+        sizeof(char) * (strlen(netdata_configured_user_config_dir) + strlen(".install-type") + 2));
+    sprintf(install_type_filename, "%s/%s", netdata_configured_user_config_dir, ".install-type");
+    if (unlikely(access(install_type_filename, R_OK) != 0)) {
+        freez(install_type_filename);
+        return;
+    }
+
+    FILE *fp = fopen(install_type_filename, "r");
+    if(fp) {
+        char *s, *t, buf[4096 + 1];
+        size_t len = 0;
+
+        while ((s = fgets_trim_len(buf, 4096, fp, &len))) {
+            if (!strncmp (buf, "INSTALL_TYPE='", 14)) {
+                s = t = buf + 13;
+                if (s) {
+                    while (*s=='\'') s++;
+                    while (*++t != '\0');
+                    while (--t > s && *t == '\'')
+                        *t = '\0';
+                    if (*s)
+                        analytics_set_data_str(&analytics_data.netdata_install_type, (char *)s);
+                }
+                break;
+            }
+        }
+        fclose(fp);
+    }
+    freez(install_type_filename);
 }
 
 void analytics_charts(void)
@@ -632,6 +674,8 @@ void set_late_global_environment()
         analytics_set_data_str(&analytics_data.netdata_buildinfo, (char *)buffer_tostring(bi));
         buffer_free(bi);
     }
+
+    analytics_get_install_type();
 }
 
 static void get_system_timezone(void)
@@ -819,6 +863,7 @@ void set_global_environment()
     analytics_set_data(&analytics_data.netdata_host_agent_claimed, "null");
     analytics_set_data(&analytics_data.netdata_host_cloud_enabled, "null");
     analytics_set_data(&analytics_data.netdata_config_https_available, "null");
+    analytics_set_data(&analytics_data.netdata_install_type, "null");
 
     analytics_data.prometheus_hits = 0;
     analytics_data.shell_hits = 0;
@@ -900,7 +945,7 @@ void send_statistics(const char *action, const char *action_result, const char *
 
     sprintf(
         command_to_run,
-        "%s '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' ",
+        "%s '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' ",
         as_script,
         action,
         action_result,
@@ -937,7 +982,8 @@ void send_statistics(const char *action, const char *action_result, const char *
         analytics_data.netdata_host_aclk_implementation,
         analytics_data.netdata_host_agent_claimed,
         analytics_data.netdata_host_cloud_enabled,
-        analytics_data.netdata_config_https_available);
+        analytics_data.netdata_config_https_available,
+        analytics_data.netdata_install_type);
 
     info("%s '%s' '%s' '%s'", as_script, action, action_result, action_data);
 

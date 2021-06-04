@@ -29,7 +29,7 @@
     },
 
 /* Needed to calculate the space needed for parameters */
-#define ANALYTICS_NO_OF_ITEMS 33
+#define ANALYTICS_NO_OF_ITEMS 34
 
 struct analytics_data {
     char *netdata_config_stream_enabled;
@@ -65,6 +65,7 @@ struct analytics_data {
     char *netdata_host_agent_claimed;
     char *netdata_host_cloud_enabled;
     char *netdata_config_https_available;
+    char *netdata_install_type;
 
     size_t data_length;
 
