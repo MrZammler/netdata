@@ -572,6 +572,8 @@ void analytics_gather_mutable_meta_data(void)
         snprintfz(b, 6, "%zu", rrd_hosts_available);
         analytics_set_data(&analytics_data.netdata_config_hosts_available, b);
     }
+
+    analytics_get_mem_usage();//proc/self/status
 }
 
 void analytics_main_cleanup(void *ptr)
