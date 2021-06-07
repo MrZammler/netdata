@@ -460,8 +460,9 @@ void analytics_https(void)
     //check for build ok if enable_https is 0!
     BUFFER *b = buffer_create(30);
 #ifdef ENABLE_HTTPS
+    debug(D_ANALYTICS, "%d", localhost->ssl.flags);
     analytics_exporting_connectors_ssl(b);
-    buffer_strcat(b, netdata_client_ctx && localhost->ssl.flags == NETDATA_SSL_HANDSHAKE_COMPLETE ? "streaming|" : "|");
+    buffer_strcat(b, netdata_client_ctx && localhost->rrdpush_sender_connected == 1 ? "streaming|" : "|");
     buffer_strcat(b, netdata_srv_ctx ? "web" : "");
 #else
     buffer_strcat(b, "||");
