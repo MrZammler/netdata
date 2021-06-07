@@ -59,6 +59,7 @@ void analytics_log_data(void)
     debug(D_ANALYTICS, "NETDATA_INSTALL_TYPE               : [%s]", analytics_data.netdata_install_type);
     debug(D_ANALYTICS, "NETDATA_CONFIG_IS_PRIVATE_REGISTRY : [%s]", analytics_data.netdata_config_is_private_registry);
     debug(D_ANALYTICS, "NETDATA_CONFIG_USE_PRIVATE_REGISTRY: [%s]", analytics_data.netdata_config_use_private_registry);
+    debug(D_ANALYTICS, "NETDATA_CONFIG_OOM_SCORE           : [%s]", analytics_data.netdata_config_oom_score);
 }
 
 /*
@@ -100,6 +101,9 @@ void analytics_free_data(void)
     freez(analytics_data.netdata_host_cloud_enabled);
     freez(analytics_data.netdata_config_https_available);
     freez(analytics_data.netdata_install_type);
+    freez(analytics_data.netdata_config_is_private_registry);
+    freez(analytics_data.netdata_config_use_private_registry);
+    freez(analytics_data.netdata_config_oom_score);
 }
 
 /*
@@ -189,6 +193,12 @@ void analytics_log_dashboard(void)
         snprintfz(b, 6, "%d", analytics_data.dashboard_hits);
         analytics_set_data(&analytics_data.netdata_dashboard_used, b);
     }
+}
+
+void analytics_report_oom_score(long long int score){
+    char b[7];
+    snprintfz(b, 6, "%d", (int)score);
+    analytics_set_data(&analytics_data.netdata_config_oom_score, b);
 }
 
 void analytics_mirrored_hosts(void)
@@ -457,12 +467,11 @@ void analytics_alarms(void)
 void analytics_https(void)
 {
     //do clang formatting
-    //check for build ok if enable_https is 0!
+    //check for build ok if enable_https is 0!!!!
     BUFFER *b = buffer_create(30);
 #ifdef ENABLE_HTTPS
-    debug(D_ANALYTICS, "%d", localhost->ssl.flags);
     analytics_exporting_connectors_ssl(b);
-    buffer_strcat(b, netdata_client_ctx && localhost->rrdpush_sender_connected == 1 ? "streaming|" : "|");
+    buffer_strcat(b, netdata_client_ctx && localhost->ssl.flags == NETDATA_SSL_HANDSHAKE_COMPLETE && localhost->rrdpush_sender_connected == 1 ? "streaming|" : "|");
     buffer_strcat(b, netdata_srv_ctx ? "web" : "");
 #else
     buffer_strcat(b, "||");
@@ -497,13 +506,20 @@ void analytics_misc(void)
 
     analytics_set_data(&analytics_data.netdata_config_exporting_enabled, appconfig_get_boolean(&exporting_config, CONFIG_SECTION_EXPORTING, "enabled", CONFIG_BOOLEAN_NO) ? "true" : "false");
 
-    //if(web_server_mode != WEB_SERVER_MODE_NONE) {
-    debug(D_ANALYTICS, "registry enabled: %d", config_get_boolean(CONFIG_SECTION_REGISTRY, "enabled", 0));
+    analytics_set_data(&analytics_data.netdata_config_is_private_registry, "false");
+    analytics_set_data(&analytics_data.netdata_config_use_private_registry, "false");
+    if(web_server_mode != WEB_SERVER_MODE_NONE) {
+        if (strcmp(config_get(CONFIG_SECTION_REGISTRY, "registry to announce", "https://registry.my-netdata.io"), "https://registry.my-netdata.io")) {
+            analytics_set_data(&analytics_data.netdata_config_use_private_registry, "true");
+            if (config_get_boolean(CONFIG_SECTION_REGISTRY, "enabled", CONFIG_BOOLEAN_NO))
+                analytics_set_data(&analytics_data.netdata_config_is_private_registry, "true");
+        }
+    }
 }
 
 /*
  * Get the meta data, called from the thread once after the original delay
- * These are values that won't change between agent restarts, and therefore
+ * These are values that won't change during agent runtime, and therefore
  * don't try to read them on each META event send
  */
 void analytics_gather_immutable_meta_data(void)
@@ -872,6 +888,7 @@ void set_global_environment()
     analytics_set_data(&analytics_data.netdata_install_type, "null");
     analytics_set_data(&analytics_data.netdata_config_is_private_registry, "null");
     analytics_set_data(&analytics_data.netdata_config_use_private_registry, "null");
+    analytics_set_data(&analytics_data.netdata_config_oom_score, "null");
 
     analytics_data.prometheus_hits = 0;
     analytics_data.shell_hits = 0;
@@ -953,7 +970,7 @@ void send_statistics(const char *action, const char *action_result, const char *
 
     sprintf(
         command_to_run,
-        "%s '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' ",
+        "%s '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' ",
         as_script,
         action,
         action_result,
@@ -991,7 +1008,10 @@ void send_statistics(const char *action, const char *action_result, const char *
         analytics_data.netdata_host_agent_claimed,
         analytics_data.netdata_host_cloud_enabled,
         analytics_data.netdata_config_https_available,
-        analytics_data.netdata_install_type);
+        analytics_data.netdata_install_type,
+        analytics_data.netdata_config_is_private_registry,
+        analytics_data.netdata_config_use_private_registry,
+        analytics_data.netdata_config_oom_score);
 
     info("%s '%s' '%s' '%s'", as_script, action, action_result, action_data);
 

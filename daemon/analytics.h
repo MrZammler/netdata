@@ -29,7 +29,7 @@
     },
 
 /* Needed to calculate the space needed for parameters */
-#define ANALYTICS_NO_OF_ITEMS 36
+#define ANALYTICS_NO_OF_ITEMS 37
 
 struct analytics_data {
     char *netdata_config_stream_enabled;
@@ -68,6 +68,7 @@ struct analytics_data {
     char *netdata_install_type;
     char *netdata_config_is_private_registry;
     char *netdata_config_use_private_registry;
+    char *netdata_config_oom_score;
 
     size_t data_length;
 
@@ -88,6 +89,7 @@ extern void analytics_log_json(void);
 extern void analytics_log_prometheus(void);
 extern void analytics_log_dashboard(void);
 extern void analytics_gather_mutable_meta_data(void);
+extern void analytics_report_oom_score(long long int score);
 
 extern struct analytics_data analytics_data;
 

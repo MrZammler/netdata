@@ -59,6 +59,9 @@ NETDATA_HOST_AGENT_CLAIMED="${34}"
 NETDATA_HOST_CLOUD_ENABLED="${35}"
 NETDATA_CONFIG_HTTPS_AVAILABLE="${36}"
 NETDATA_INSTALL_TYPE="${37}"
+NETDATA_IS_PRIVATE_REGISTRY="${38}"
+NETDATA_USE_PRIVATE_REGISTRY="${39}"
+NETDATA_CONFIG_OOM_SCORE="${40}"
 
 # define body of request to be sent
 REQ_BODY="$(cat << EOF
@@ -118,7 +121,10 @@ REQ_BODY="$(cat << EOF
         "config_web_enabled": ${NETDATA_CONFIG_WEB_ENABLED},
         "config_exporting_enabled": ${NETDATA_CONFIG_EXPORTING_ENABLED},
         "config_is_parent": ${NETDATA_CONFIG_IS_PARENT},
+        "config_is_private_registry": ${NETDATA_IS_PRIVATE_REGISTRY},
+        "config_private_registry_used": ${NETDATA_USE_PRIVATE_REGISTRY},
         "config_hosts_available": ${NETDATA_CONFIG_HOSTS_AVAILABLE},
+        "config_oom_score": ${NETDATA_CONFIG_OOM_SCORE},
         "alarms_normal": ${NETDATA_ALARMS_NORMAL},
         "alarms_warning": ${NETDATA_ALARMS_WARNING},
         "alarms_critical": ${NETDATA_ALARMS_CRITICAL},
