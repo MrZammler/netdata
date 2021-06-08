@@ -503,7 +503,7 @@ void analytics_get_mem_usage(void)
     }
     *c = '\0';
     
-    debug(D_ANALYTICS, "%s %s %s", buffer, mem[0], mem[1]);
+    debug(D_ANALYTICS, "%s %s %s %ld %ld", buffer, mem[0], mem[1], (str2l(mem[0]) * (size_t)sysconf( _SC_PAGESIZE)) / 1024, (str2l(mem[1]) * (size_t)sysconf( _SC_PAGESIZE)) / 1024);
     
 
 
