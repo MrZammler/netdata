@@ -482,6 +482,35 @@ void analytics_https(void)
 }
 
 /*
+ * Get memory usage of the agent
+ */
+void analytics_get_mem_usage(void)
+{
+    char *mem[7];
+    int part = 0;
+    char buffer[200];
+    read_file("/proc/self/statm", buffer, sizeof(buffer));
+
+    char *c=buffer;
+    mem[part++] = c++;
+    while (*c && *c != '\n') {
+        if (*c == ' ') {
+            *c = '\0';
+            mem[part++] = ++c;
+        }
+        else
+            c++;
+    }
+    *c = '\0';
+    
+    debug(D_ANALYTICS, "%s %s %s", buffer, mem[0], mem[1]);
+    
+
+
+
+}
+
+/*
  * Misc attributes to get (run from meta)
  */
 void analytics_misc(void)
